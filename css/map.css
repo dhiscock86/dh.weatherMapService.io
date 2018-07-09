@@ -1,0 +1,119 @@
+
+/* 
+    Created on : 3-Jul-2018, 8:33:21 PM
+    Author     : danielhiscock
+*/
+html, body {
+    height: 97%;
+    width: 98%;
+    margin: 1%;
+}
+
+#tabcontent {
+    width: 25%;
+}
+
+#loadPane {
+    border: solid #97DCF2 1px;
+    align-content: center;
+}
+
+.weatherInterface {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+#coordBox {
+    height: 70%;
+    padding: 5px;
+    font-size: 1.5em;
+}
+
+#map {
+    width: 100%;
+}
+
+#jsonweather, #jsonplace {
+    font-weight: bold;
+    font-size:1.5em;
+}
+
+p[id*='weatherinfo'] {
+    background-color: lightcyan;
+    border: 1px solid darkgray;
+    padding: 5px;
+}
+
+
+#weatherContent {
+
+    height:100%;
+}
+
+#weatherContent > img {
+    align-self: center;
+}
+
+.tglbtn {
+    background-color: #008CBA;
+    box-shadow: 5px 5px 5px #888888;
+    border-radius:5px;
+    color: white;
+    width:200px;
+    padding: 15px 15px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.tglbtn:hover {
+    color: cyan;
+}
+.tglbtn:active {
+    box-shadow: none;
+}
+
+.headerSection {
+    background-color: lightcyan;
+    border: 2px solid black;
+    grid-area: header; 
+}
+.mapSection {
+    border: 2px solid black;
+    grid-area: main; 
+    height:550px;
+    width: 100%;
+}
+.rightSection {
+    background-color: lightcyan;
+    border: 2px solid black;
+    width:250px;
+    height: 180px;
+    grid-area: righta;
+}
+
+.rightSection2 {
+    background-color: lightcyan;
+    border: 2px solid black;
+    width:250px;
+    height: 365px;
+    grid-area: rightb;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-areas:
+        'header header header header header'
+        'main main main main righta'
+        'main main main main rightb';
+    grid-gap: 5px;
+    padding: 5px;
+}
+.grid-container > div { 
+    text-align: left;
+    font-size: 15px;
+}
+
+
+
+
