@@ -9,7 +9,7 @@ html, body {
     margin: 1%;
 }
 
-#tabcontent {
+#rightPane {
     width: 25%;
 }
 
@@ -18,7 +18,7 @@ html, body {
     align-content: center;
 }
 
-.weatherInterface {
+#content {
     width: 100%;
     height: 100%;
     margin: 0;
