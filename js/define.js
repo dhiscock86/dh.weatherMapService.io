@@ -180,8 +180,8 @@ define([
     //****************************************************************************************
     function getWeather(city, ccode) {
         // Use CORS
-        esriConfig.defaults.io.corsEnabledServers.push("http://api.openweathermap.org");
-        var weatherAPI = "http://api.openweathermap.org/data/2.5/forecast?q=" + city + "," + ccode 
+        esriConfig.defaults.io.corsEnabledServers.push("https://api.openweathermap.org");
+        var weatherAPI = "https://api.openweathermap.org/data/2.5/forecast?q=" + city + "," + ccode 
                        + "&lang=de&APPID=6b904086651c872d0e2c58c1529d2dcb";
         var weatherRequest = esriRequest({
             "url": weatherAPI
@@ -215,7 +215,7 @@ define([
             // create an image to represent the conditions icon
             var weatherIcon = new Image(40, 40);
             var img = json.list[i].weather[0].icon;
-            weatherIcon.src = "http://openweathermap.org/img/w/" + img + ".png";
+            weatherIcon.src = "https://openweathermap.org/img/w/" + img + ".png";
             
             // Procedurally create elements to hold forecast data based on the length of the JSON data
             var newParagraph = document.createElement("P");
