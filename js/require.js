@@ -24,8 +24,8 @@ require([
     define.initialize();
     
     // event handler for city layer toggle button
-    var roadsToggle = dom.byId("cityTgl");
-    on(roadsToggle, "click", define.toggleCities);
+    var cityToggle = dom.byId("cityTgl");
+    on(cityToggle, "click", define.toggleCities);
 
 });
 
