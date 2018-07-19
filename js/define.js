@@ -51,7 +51,7 @@ define([
     };
     
     // global variables
-    const map, url, cities;
+    var map, url, cities;
     
     //****************************************************************************************
     //Function to initialize map and esri widgets
@@ -90,7 +90,7 @@ define([
     //****************************************************************************************
     function loadCities() {
         // infotemplate - not a required component
-        const template = new InfoTemplate("${CITY_NAME}", "Population: ${POP}");
+        var template = new InfoTemplate("${CITY_NAME}", "Population: ${POP}");
 
         url = "https://services1.arcgis.com/XRQ58kpEa17kSlHX/ArcGIS/rest/services/World_Cities/FeatureServer/0";
         
@@ -115,7 +115,7 @@ define([
         var marker = new SimpleMarkerSymbol();
         marker.setColor(new Color("#00FFFF"));
         marker.setStyle(SimpleMarkerSymbol.STYLE_CIRCLE);
-        const renderer = new esri.renderer.SimpleRenderer(marker);
+        var renderer = new esri.renderer.SimpleRenderer(marker);
         cities.setRenderer(renderer);
         
         cities.on("load", function () {
@@ -128,7 +128,7 @@ define([
     // retrieve an display DD coordinates to display in HTML and use for reverse geocoding
     //****************************************************************************************
     function showCoordinates(evt) {
-        const mp = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
+        var mp = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
         //display mouse coordinates
         dom.byId("latitude").innerHTML = mp.y.toFixed(3);
         dom.byId("longitude").innerHTML = mp.x.toFixed(3);
@@ -143,13 +143,13 @@ define([
     function getPlace() {
         // Use CORS
         esriConfig.defaults.io.corsEnabledServers.push("https://api.opencagedata.com");
-        const latitude = dom.byId("latitude").innerHTML;
-        const longitude = dom.byId("longitude").innerHTML;
+        var latitude = dom.byId("latitude").innerHTML;
+        var longitude = dom.byId("longitude").innerHTML;
 
-        const opendataApi = "https://api.opencagedata.com/geocode/v1/geojson?q=" + latitude + "+" 
+        var opendataApi = "https://api.opencagedata.com/geocode/v1/geojson?q=" + latitude + "+" 
                           + longitude + "&min_confidence=1&key=ac6c34cf21764d31b9d3ef6aa4a0047d";
         
-        const placeRequest = esriRequest({
+        var placeRequest = esriRequest({
             "url": opendataApi
         });
         placeRequest.then(placeRequestSucceeded, requestFailed);
@@ -161,12 +161,12 @@ define([
     function placeRequestSucceeded(response) {
 
         var jsonstring = dojoJson.toJson(response, true);
-        const json = JSON.parse(jsonstring);
+        var json = JSON.parse(jsonstring);
 
         if (json) {
-            const city = json.features[0].properties.components.city;
-            const country = json.features[0].properties.components.country;
-            const ccode = json.features[0].properties.components.country_code;
+            var city = json.features[0].properties.components.city;
+            var country = json.features[0].properties.components.country;
+            var ccode = json.features[0].properties.components.country_code;
 
             dom.byId("jsonplace").innerHTML = city + ", " + country;
             dom.byId("jsonweather").innerHTML = city + ", " + country;
@@ -181,9 +181,9 @@ define([
     function getWeather(city, ccode) {
         // Use CORS
         esriConfig.defaults.io.corsEnabledServers.push("https://api.openweathermap.org");
-        const weatherAPI = "https://api.openweathermap.org/data/2.5/forecast?q=" + city + "," + ccode 
+        var weatherAPI = "https://api.openweathermap.org/data/2.5/forecast?q=" + city + "," + ccode 
                        + "&lang=de&APPID=6b904086651c872d0e2c58c1529d2dcb";
-        const weatherRequest = esriRequest({
+        var weatherRequest = esriRequest({
             "url": weatherAPI
         });
         
@@ -199,7 +199,7 @@ define([
         
         //convert json string to JSON with dojo
         var jsonstring = dojoJson.toJson(response, true);
-        const json = JSON.parse(jsonstring);
+        var json = JSON.parse(jsonstring);
         
         // remove any child elements within the weather content container
         var nodeRemove = dom.byId("weatherContent");        
@@ -210,15 +210,15 @@ define([
         // apply parameters for the date/time
         var dateOptions = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric'};
         // Procedurally generate elements containing forecasts every 3 hours for the next 5 days
-        for (let i = 0; i < Object.keys(json.list).length; i++) {
+        for (var i = 0; i < Object.keys(json.list).length; i++) {
             
             // create an image to represent the conditions icon
-            let weatherIcon = new Image(40, 40);
-            let img = json.list[i].weather[0].icon;
+            var weatherIcon = new Image(40, 40);
+            var img = json.list[i].weather[0].icon;
             weatherIcon.src = "https://openweathermap.org/img/w/" + img + ".png";
             
             // Procedurally create elements to hold forecast data based on the length of the JSON data
-            let newParagraph = document.createElement("P");
+            var newParagraph = document.createElement("P");
             newParagraph.id = "weatherinfo" + i;
             dom.byId("weatherContent").appendChild(newParagraph);
             
@@ -243,7 +243,7 @@ define([
     //****************************************************************************************
     function toggleCities() {
 
-        const cityTgl = dom.byId("cityTgl");
+        var cityTgl = dom.byId("cityTgl");
         console.log("in the toggle function");
         
         // Ternery logic for button events
