@@ -41,22 +41,29 @@ define([
         parser,
         dojoJson
         ) {
-    
-    parser.parse();
-    
+
+
+
     // Callback function to require script
     return {
         initialize: initialize,
         toggleCities: toggleCities
     };
-    
+
     // global variables
     var map, url, cities;
-    
+
+    function initialize() {
+        initMap()
+                .then(loadCities)
+                .then(createLegend)
+                .catch(requestFailed);
+    }
+
     //****************************************************************************************
     //Function to initialize map and esri widgets
     //****************************************************************************************
-    function initialize() {
+    async function initMap() {
 
         map = new Map("map", {
             basemap: "gray-vector",
@@ -68,32 +75,32 @@ define([
         var scalebar = new Scalebar({
             map: map,
             scalebarUnit: "metric"
-        });     
-        
-        map.addLayer(loadCities());
-        
-        // create a legend for the city feature based on population
-        var legend = new Legend({
-          map: map,
-          layerInfos: [{
-            layer: cities,
-            title: "City Population"
-          }]
-        }, "legendDiv");
-        
-        // display coordinates based on click
-        map.on("click", showCoordinates);
+        });
+
+        map.on("click", function (evt) {
+            showCoordinates(evt)
+                    .then(getPlace)
+                    .then(placeRequestSucceeded)
+                    .then(getWeather)
+                    .then(weatherRequestSucceeded)
+                    .catch(requestFailed);
+        });
+
+
     }
-    
+
+
     //****************************************************************************************
     // load the cities feature layer function, apply rendering and infotemplate
     //****************************************************************************************
     function loadCities() {
+        // Use CORS
+        esriConfig.defaults.io.corsEnabledServers.push("https://services1.arcgis.com");
         // infotemplate - not a required component
         var template = new InfoTemplate("${CITY_NAME}", "Population: ${POP}");
-
-        url = "https://services1.arcgis.com/XRQ58kpEa17kSlHX/ArcGIS/rest/services/World_Cities/FeatureServer/0";
         
+        url = "https://services1.arcgis.com/XRQ58kpEa17kSlHX/ArcGIS/rest/services/World_Cities/FeatureServer/0";
+
         cities = new FeatureLayer(url, {
             mode: FeatureLayer.MODE_SNAPSHOT,
             orderByFields: ["POP DESC"],
@@ -101,7 +108,7 @@ define([
             opacity: 0.5,
             infoTemplate: template
         });
-        
+
         // required data for proportional symbols based on city population
         var sizeInfo = {
             field: "POP",
@@ -111,50 +118,71 @@ define([
             minSize: 6,
             maxSize: 25
         };
-        
+
         var marker = new SimpleMarkerSymbol();
         marker.setColor(new Color("#00FFFF"));
         marker.setStyle(SimpleMarkerSymbol.STYLE_CIRCLE);
         var renderer = new esri.renderer.SimpleRenderer(marker);
         cities.setRenderer(renderer);
-        
+
         cities.on("load", function () {
             cities.renderer.setSizeInfo(sizeInfo);
         });
 
-        return cities;
+        map.addLayer(cities);
     }
+
+    function createLegend() {
+        // create a legend for the city feature based on population
+        var legend = new Legend({
+            map: map,
+            minSize: 0,
+            layerInfos: [{
+                    layer: cities,
+                    title: "City Population"
+                }]
+        }, "legendDiv");
+    }
+    ;
+
     //****************************************************************************************
     // retrieve an display DD coordinates to display in HTML and use for reverse geocoding
     //****************************************************************************************
-    function showCoordinates(evt) {
+    async function showCoordinates(evt) {
         var mp = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
         //display mouse coordinates
         dom.byId("latitude").innerHTML = mp.y.toFixed(3);
         dom.byId("longitude").innerHTML = mp.x.toFixed(3);
         dom.byId("degrees1").innerHTML = "9&#176";
         dom.byId("degrees2").innerHTML = "9&#176";
-        getPlace();
+
+        lat = mp.y.toFixed(3);
+        lon = mp.x.toFixed(3);
+
+        return [lat, lon];
+
     }
-    
+
     //****************************************************************************************
     // Enable access to the location API for reverse geocoding (CORS enabled)
     //****************************************************************************************
-    function getPlace() {
+    function getPlace(coords) {
+        console.log(coords[0]);
+        console.log(coords[1]);
         // Use CORS
         esriConfig.defaults.io.corsEnabledServers.push("https://api.opencagedata.com");
-        var latitude = dom.byId("latitude").innerHTML;
-        var longitude = dom.byId("longitude").innerHTML;
 
-        var opendataApi = "https://api.opencagedata.com/geocode/v1/geojson?q=" + latitude + "+" 
-                          + longitude + "&min_confidence=1&key=ac6c34cf21764d31b9d3ef6aa4a0047d";
-        
+        var opendataApi = "https://api.opencagedata.com/geocode/v1/geojson?q=" + coords[0] + "+"
+                + coords[1] + "&min_confidence=1&key=ac6c34cf21764d31b9d3ef6aa4a0047d";
+
         var placeRequest = esriRequest({
             "url": opendataApi
         });
-        placeRequest.then(placeRequestSucceeded, requestFailed);
+        
+        return placeRequest;
+        
     }
-    
+
     //****************************************************************************************
     // If request succeeds, pull in data location info from JSON
     //****************************************************************************************
@@ -163,65 +191,65 @@ define([
         var jsonstring = dojoJson.toJson(response, true);
         var json = JSON.parse(jsonstring);
 
-        if (json) {
-            var city = json.features[0].properties.components.city;
-            var country = json.features[0].properties.components.country;
-            var ccode = json.features[0].properties.components.country_code;
 
-            dom.byId("jsonplace").innerHTML = city + ", " + country;
-            dom.byId("jsonweather").innerHTML = city + ", " + country;
+        var city = json.features[0].properties.components.city;
+        var country = json.features[0].properties.components.country;
+        var ccode = json.features[0].properties.components.country_code;
 
-            getWeather(city, ccode);
-        }
+        dom.byId("jsonplace").innerHTML = city + ", " + country;
+        dom.byId("jsonweather").innerHTML = city + ", " + country;
+        
+        console.log(city + " " + typeof city);
+        
+        return [city, ccode];
     }
-    
+
     //****************************************************************************************
     // Results from location are used to forward geocode to retrieve weather information
     //****************************************************************************************
-    function getWeather(city, ccode) {
+    function getWeather(locate) {
+
         // Use CORS
         esriConfig.defaults.io.corsEnabledServers.push("https://api.openweathermap.org");
-        var weatherAPI = "https://api.openweathermap.org/data/2.5/forecast?q=" + city + "," + ccode 
-                       + "&lang=de&APPID=6b904086651c872d0e2c58c1529d2dcb";
+        var weatherAPI = "https://api.openweathermap.org/data/2.5/forecast?q=" + locate[0] + "," + locate[1]
+                + "&lang=de&APPID=6b904086651c872d0e2c58c1529d2dcb";
         var weatherRequest = esriRequest({
             "url": weatherAPI
         });
-        
-        console.log(weatherRequest);
-        
-        weatherRequest.then(weatherRequestSucceeded, requestFailed);
+
+        return weatherRequest;
     }
-    
+
     //****************************************************************************************
     // retrieve and display weather forcast information from API
     //****************************************************************************************
     function weatherRequestSucceeded(response) {
-        
+
         //convert json string to JSON with dojo
         var jsonstring = dojoJson.toJson(response, true);
         var json = JSON.parse(jsonstring);
-        
+
         // remove any child elements within the weather content container
-        var nodeRemove = dom.byId("weatherContent");        
+        var nodeRemove = dom.byId("weatherContent");
         while (nodeRemove.firstChild) {
             nodeRemove.removeChild(nodeRemove.firstChild);
         }
-        
+
         // apply parameters for the date/time
         var dateOptions = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric'};
         // Procedurally generate elements containing forecasts every 3 hours for the next 5 days
         for (var i = 0; i < Object.keys(json.list).length; i++) {
-            
+
             // create an image to represent the conditions icon
             var weatherIcon = new Image(40, 40);
             var img = json.list[i].weather[0].icon;
             weatherIcon.src = "https://openweathermap.org/img/w/" + img + ".png";
-            
+
             // Procedurally create elements to hold forecast data based on the length of the JSON data
             var newParagraph = document.createElement("P");
             newParagraph.id = "weatherinfo" + i;
             dom.byId("weatherContent").appendChild(newParagraph);
-            
+
             // Fill the element with weather forecast data. (Note: temp converted from Kelvin to celcius)
             dom.byId("weatherinfo" + i).innerHTML =
                     //Use German date formatting
@@ -231,21 +259,20 @@ define([
             dom.byId("weatherinfo" + i).appendChild(weatherIcon);
         }
     }
-    
+
     // Function for exceptipon handling
     function requestFailed(error) {
-    // If a server request fails display an error within the browser console
+        // If a server request fails display an error within the browser console
         console.log(error);
     }
-    
+
     //****************************************************************************************
     // Function to toggle city layer on/off based on toggle button
     //****************************************************************************************
     function toggleCities() {
 
         var cityTgl = dom.byId("cityTgl");
-        console.log("in the toggle function");
-        
+
         // Ternery logic for button events
         cityTgl.value === "Remove Cities" ? cities.hide() : cities.show();
         cityTgl.value === "Remove Cities" ? cityTgl.value = "Add Cities" : cityTgl.value = "Remove Cities";
